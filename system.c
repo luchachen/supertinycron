@@ -219,7 +219,7 @@ int main() {
     int state = get_state_scheduled_restart();
     printf("Scheduled restart state: %d\n", state);
 
-    //scheduled_restart_apply(0, 0, 0, NULL, 0); // Disable restart
+    scheduled_restart_apply(0, 0, 0, NULL, 0); // Disable restart
 
     return 0;
 }
