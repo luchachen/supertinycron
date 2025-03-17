@@ -163,7 +163,7 @@ void scheduled_restart_apply(int enabled, int hour, int minute, const char *week
         fprintf(temp_fp, "%s %s\n", cron_expr_str, SCHEDULED_RESTART_CMD);
     }
 
-    if (found) {
+    if (enabled || found) {
         fseek(fp, 0, SEEK_SET);
         fseek(temp_fp, 0, SEEK_SET);
         while (fgets(line, sizeof(line), temp_fp) != NULL) {
@@ -219,7 +219,7 @@ int main() {
     int state = get_state_scheduled_restart();
     printf("Scheduled restart state: %d\n", state);
 
-    scheduled_restart_apply(0, 0, 0, NULL, 0); // Disable restart
+    //scheduled_restart_apply(0, 0, 0, NULL, 0); // Disable restart
 
     return 0;
 }
