@@ -8,9 +8,14 @@ target_compile_features(ccronexpr_test PRIVATE c_std_99)
 target_include_directories(ccronexpr_test PRIVATE .)
 target_link_libraries(ccronexpr_test ccronexpr)
 
+add_executable(ccronexpr_test2 ../system.c)
+target_compile_features(ccronexpr_test2 PRIVATE c_std_99)
+target_include_directories(ccronexpr_test2 PRIVATE .)
+target_link_libraries(ccronexpr_test2 ccronexpr)
+
 if (MSVC)
     target_compile_definitions(ccronexpr_test PRIVATE _CRT_SECURE_NO_WARNINGS)
 endif ()
 
 # Add tests
-add_test(NAME ccronexpr_test COMMAND ccronexpr_test)
+add_test(NAME ccronexpr_test COMMAND ccronexpr_test ccronexpr_test2)
