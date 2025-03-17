@@ -3,30 +3,49 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdbool.h>
 #include "ccronexpr.h"
 
-#define SCHEDULED_RESTART_CMD "/usr/bin/restart"
+//#define SCHEDULED_RESTART_CMD "/usr/bin/restart"
+#define SCHEDULED_RESTART_CMD "logger \"scheduled-restart task exec\" && /usr/sbin/reboot"
+//Crontab directory
+#ifdef __NTOS__
+// host linux
+#define CRON_DIR_ARG "-c /etc/crontab/"
+#else
+#define CRON_DIR_ARG ""
+#endif
 
-// Function to reset factory settings
+bool is_gateway_series() {
+    // Implement this function based on ProductSeries().is_gateway_series
+    return false; // Placeholder implementation
+}
+
+bool is_gateway_sub_idp_series() {
+    // Implement this function based on ProductSeries().is_gateway_sub_idp_series
+    return false; // Placeholder implementation
+}
+
 void reset_factory_settings() {
-    FILE *hostname_file = fopen("/etc/hostname", "w");
-    if (hostname_file == NULL) {
-        perror("Failed to open /etc/hostname");
-        return;
+    const char *hostname;
+
+    if (is_gateway_series()) {
+        hostname = "Ruijie";
+    } else if (is_gateway_sub_idp_series()) {
+        hostname = "idp";
+    } else {
+        hostname = "firewall";
     }
 
-    // Truncate the file and write default hostname
-    ftruncate(fileno(hostname_file), 0);
-    int is_gateway = 1; // Replace with actual logic to determine product series
-    if (is_gateway) {
-        fprintf(hostname_file, "Ruijie");
-    } else {
-        fprintf(hostname_file, "firewall");
+    // Change hostname using sethostname
+    if (sethostname(hostname, strlen(hostname)) != 0) {
+        perror("Failed to set hostname");
     }
-    fclose(hostname_file);
 
     // Remove scheduled restart cron jobs
-    system("crontab -l | grep -v '" SCHEDULED_RESTART_CMD "' | crontab -");
+    system("crontab " CRON_DIR_ARG " -l |" 
+           "grep -v '" SCHEDULED_RESTART_CMD "' |"
+           "crontab " CRON_DIR_ARG " -");
     printf("Scheduled restart reset to factory settings.\n");
 }
 
@@ -78,18 +97,20 @@ void scheduled_restart_apply(int enabled, int hour, int minute, const char *week
 
         // Add the cron job to the system's crontab
         char command[512];
-        snprintf(command, sizeof(command), "(crontab -l; echo \"%s %s\") | crontab -", cron_expr_str, SCHEDULED_RESTART_CMD);
+        snprintf(command, sizeof(command), "(crontab " CRON_DIR_ARG " -l; echo \"%s %s\") |"
+               "crontab " CRON_DIR_ARG " -", cron_expr_str, SCHEDULED_RESTART_CMD);
         system(command);
     } else {
         // Remove the scheduled restart command from the crontab
-        system("crontab -l | grep -v '" SCHEDULED_RESTART_CMD "' | crontab -");
+        system("crontab " CRON_DIR_ARG " -l | grep -v '" SCHEDULED_RESTART_CMD "' |"
+               "crontab " CRON_DIR_ARG " -");
         printf("Scheduled restart disabled. Removed from crontab.\n");
     }
 }
 
 // Function to get the state of the scheduled restart
 int get_state_scheduled_restart() {
-    FILE *pipe = popen("crontab -l | grep '" SCHEDULED_RESTART_CMD "'", "r");
+    FILE *pipe = popen("crontab " CRON_DIR_ARG " -l | grep '" SCHEDULED_RESTART_CMD "'", "r");
     if (!pipe) {
         perror("Failed to run crontab command");
         return 0;
@@ -100,7 +121,22 @@ int get_state_scheduled_restart() {
     if (fgets(buffer, sizeof(buffer), pipe) != NULL) {
         running = 1; // Command exists in crontab
     }
-    pclose(pipe);
+    // Get actual command exit code
+    int status = pclose(pipe);
+    if (WIFEXITED(status)) {
+        int exit_code = WEXITSTATUS(status);
+        if (exit_code == 0) {
+            running = 1;    // Command succeeded (match found)
+        } else if (exit_code == 1) {
+            running = 0;    // No match found
+        } else {
+            fprintf(stderr, "Command failed with exit code: %d\n", exit_code);
+            return 0;
+        }
+    } else {
+        perror("Command did not exit normally");
+        return 0;
+    }
 
     printf("Scheduled restart running: %d\n", running);
     return running;

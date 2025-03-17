@@ -1,6 +1,14 @@
 cmake_minimum_required(VERSION 3.0)
 project(ccronexpr)
 
+option(BUILD_WITH_NTOS
+    "Define if build with NTOS"
+    OFF)
+option(BUILD_TESTING "Build and run tests" ON)
+if(BUILD_WITH_NTOS)
+  add_definitions(-D__NTOS__)
+endif()
+
 # Library
 add_library(ccronexpr STATIC ccronexpr.c)
 target_include_directories(ccronexpr PUBLIC .)
