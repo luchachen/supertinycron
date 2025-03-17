@@ -7,11 +7,11 @@
 #include "ccronexpr.h"
 
 //#define SCHEDULED_RESTART_CMD "/usr/bin/restart"
-#define SCHEDULED_RESTART_CMD "logger \"scheduled-restart task exec\" && /usr/sbin/reboot"
+#define SCHEDULED_RESTART_CMD "logger 'scheduled-restart task exec' && /usr/sbin/reboot"
 //Crontab directory
 #ifdef __NTOS__
 // host linux
-#define CRON_DIR_ARG "-c /etc/crontab/"
+#define CRON_DIR_ARG "-c /etc/crontabs/"
 #else
 #define CRON_DIR_ARG ""
 #endif
