@@ -141,17 +141,20 @@ void scheduled_restart_apply(int enabled, int hour, int minute, const char *week
         fprintf(temp_fp, "%s %s\n", cron_expr_str, SCHEDULED_RESTART_CMD);
     }
 
-    fseek(fp, 0, SEEK_SET);
-    fseek(temp_fp, 0, SEEK_SET);
-    while (fgets(line, sizeof(line), temp_fp) != NULL) {
-        fputs(line, fp);
+    if (found) {
+        fseek(fp, 0, SEEK_SET);
+        fseek(temp_fp, 0, SEEK_SET);
+        while (fgets(line, sizeof(line), temp_fp) != NULL) {
+            fputs(line, fp);
+        }
+
+        ftruncate(fileno(fp), ftell(fp));
+        update_cron();
     }
 
-    ftruncate(fileno(fp), ftell(fp));
     fclose(fp);
     fclose(temp_fp);
 
-    update_cron();
 
     if (enabled && !found) {
         printf("Scheduled restart added to crontab.\n");
