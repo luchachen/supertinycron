@@ -11,7 +11,7 @@
 //Crontab directory
 #ifdef __NTOS__
 // host linux
-#define CRON_FILE_PATH "/etc/crontab/root"
+#define CRON_FILE_PATH "/etc/crontabs/root"
 #define CRON_UPDATE_FILE_PATH "/etc/crontabs/cron.update"
 #else
 #define CRON_FILE_PATH "/etc/crontabs/root"
@@ -69,23 +69,28 @@ void reset_factory_settings() {
     }
 
     char line[256];
+    bool found = false;
     while (fgets(line, sizeof(line), fp) != NULL) {
         if (strstr(line, SCHEDULED_RESTART_CMD) == NULL) {
             fputs(line, temp_fp);
+        } else {
+            found = true;
         }
     }
 
-    fseek(fp, 0, SEEK_SET);
-    fseek(temp_fp, 0, SEEK_SET);
-    while (fgets(line, sizeof(line), temp_fp) != NULL) {
-        fputs(line, fp);
-    }
+    if (found) {
+        fseek(fp, 0, SEEK_SET);
+        fseek(temp_fp, 0, SEEK_SET);
+        while (fgets(line, sizeof(line), temp_fp) != NULL) {
+            fputs(line, fp);
+        }
 
-    ftruncate(fileno(fp), ftell(fp));
+        ftruncate(fileno(fp), ftell(fp));
+        update_cron();
+    }
     fclose(fp);
     fclose(temp_fp);
 
-    update_cron();
 
     printf("Scheduled restart reset to factory settings.\n");
 }
@@ -147,6 +152,14 @@ void scheduled_restart_apply(int enabled, int hour, int minute, const char *week
     }
 
     if (enabled) {
+        // Calculate the next execution time
+        time_t now = time(NULL);
+        time_t next = cron_next(&expr, now);
+
+        // Log the next execution time
+        char next_time_str[64];
+        strftime(next_time_str, sizeof(next_time_str), "%Y-%m-%d %H:%M:%S", localtime(&next));
+        printf("Next scheduled restart: %s\n", next_time_str);
         fprintf(temp_fp, "%s %s\n", cron_expr_str, SCHEDULED_RESTART_CMD);
     }
 
