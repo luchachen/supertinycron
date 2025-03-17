@@ -114,6 +114,15 @@ void scheduled_restart_apply(int enabled, int hour, int minute, const char *week
     // Log the configuration
     printf("Scheduled restart config: enabled=%d, cron_expr=%s\n", enabled, cron_expr_str);
 
+    // Validate the cron expression
+    cron_expr expr;
+    const char *error = NULL;
+    cron_parse_expr(cron_expr_str, &expr, &error);
+    if (error) {
+        printf("Invalid cron expression: %s\n", error);
+        return;
+    }
+
     FILE *fp = fopen(CRON_FILE_PATH, "r+");
     if (fp == NULL) {
         perror("Failed to open crontab file");
@@ -154,7 +163,6 @@ void scheduled_restart_apply(int enabled, int hour, int minute, const char *week
 
     fclose(fp);
     fclose(temp_fp);
-
 
     if (enabled && !found) {
         printf("Scheduled restart added to crontab.\n");
