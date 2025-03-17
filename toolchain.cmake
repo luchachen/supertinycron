@@ -1,0 +1,25 @@
+set(DEFAULT_SYSROOT_PATH
+    "/home/lucha/work/rgos11.x_utils/host/d2000-aarch64/aarch64-linux-gnu/sysroot"
+    CACHE PATH
+    "Tips: var to SYSROOT_PATH" )
+set(DEFAULT_TOOLCHAIN_PATH
+    "/home/lucha/work/rgos11.x_utils/host/d2000-aarch64/gcc-linaro-7.4.1-2019.02-x86_64_aarch64-linux-gnu"
+    CACHE STRING
+    "Tips: Path for TOOLCHAIN_PATH to toolchain directory"
+    FORCE
+    )
+
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_PROCESSOR aarch64)
+
+set(CMAKE_C_COMPILER ${DEFAULT_TOOLCHAIN_PATH}/bin/aarch64-linux-gnu-gcc)
+set(CMAKE_CXX_COMPILER ${DEFAULT_TOOLCHAIN_PATH}/bin/aarch64-linux-gnu-g++)
+
+set(CMAKE_FIND_ROOT_PATH ${DEFAULT_TOOLCHAIN_PATH} ${DEFAULT_SYSROOT_PATH})
+set(CMAKE_SYSROOT ${DEFAULT_SYSROOT_PATH})
+set(ENV{PKG_CONFIG_SYSROOT_DIR} ${DEFAULT_SYSROOT_PATH})
+
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)
